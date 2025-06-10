@@ -19,36 +19,36 @@ def carta_colorida_texto(carta):
 
     if cor == "Amarelo":
         if carta.valor == "6":
-            texto_valor = "AM - 6"
+            texto_valor = "C-(6)"
         elif carta.valor == "+2":
-            texto_valor = "AM - (+2)"
+            texto_valor = "C (+2)"
         else:
-            texto_valor = f"AM - {carta.valor}"
+            texto_valor = f"C-({carta.valor})"
     elif cor == "Azul":
         if carta.valor == "5":
-            texto_valor = "AZ - 5"
+            texto_valor = "C-(5)"
         elif carta.valor.lower() == "pular":
-            texto_valor = "AZ - Pular"
+            texto_valor = "C-(Pular)6"
         else:
-            texto_valor = f"AZ - {carta.valor}"
+            texto_valor = f"C-({carta.valor})"
     elif cor == "Vermelho":
         if carta.valor.lower() == "reverter":
-            texto_valor = "VM - Reverter"
+            texto_valor = "C-Reverter"
         else:
-            texto_valor = f"VM - {carta.valor}"
+            texto_valor = f"C-({carta.valor})"
     elif cor == "Preto":
         if carta.valor == "+4":
-            texto_valor = "PR - (+4)"
+            texto_valor = "C (+4)"
         else:
-            texto_valor = f"PR - {carta.valor}"
+            texto_valor = f"C-({carta.valor})"
     elif cor == "Coringa":
         texto_valor = f"{carta.valor}"
     
     elif cor == "Verde":
         if carta.valor.lower() == "reverter":
-            texto_valor = "VD - Reverter"
+            texto_valor = "C-Reverter"
         else:
-            texto_valor = f"VD - {carta.valor}"
+            texto_valor = f"C ({carta.valor})"
     else:
         
         texto_valor = f"{carta.valor}({cor})"
