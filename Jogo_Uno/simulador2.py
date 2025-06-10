@@ -1,17 +1,38 @@
 import sys
 import time
+import random  
 from cartas import criar_baralho, embaralhar, Vetor, Carta
 from jogador import Jogador
 
 def mostrar_mao(jogador):
     if jogador.mao.tamanho == 0:
         return "vazia"
-    return ", ".join(str(jogador.mao[i]) for i in range(jogador.mao.tamanho))
+    resultado = ""
+    for i in range(jogador.mao.tamanho):
+        resultado += str(jogador.mao[i])
+        if i < jogador.mao.tamanho - 1:
+            resultado += ", "
+    return resultado
 
-def mostrar_deck(baralho):
+def mostrar_deck_(baralho, max_por_linha=5):
     if baralho.vazio():
         return "Baralho vazio"
-    return ", ".join(str(baralho[i]) for i in range(baralho.tamanho))
+    linhas = Vetor(capacidade=(baralho.tamanho // max_por_linha + 1))
+    linha_atual = ""
+    cont = 0
+    for i in range(baralho.tamanho):
+        linha_atual += str(baralho[i])
+        cont += 1
+        if cont < max_por_linha and i < baralho.tamanho - 1:
+            linha_atual += ", "
+        if cont == max_por_linha or i == baralho.tamanho - 1:
+            linhas.inserir(linha_atual)
+            linha_atual = ""
+            cont = 0
+    resultado = ""
+    for i in range(linhas.tamanho):
+        resultado += linhas[i] + "\n"
+    return resultado.rstrip("\n")
 
 def aplicar_efeito_carta(carta, indice_atual, sentido, jogadores, baralho):
     valor = carta.valor
@@ -41,12 +62,28 @@ def aplicar_efeito_carta(carta, indice_atual, sentido, jogadores, baralho):
         print(f"{jogadores[prox].nome} comprou 4 cartas e perdeu a vez!")
         novo_indice = (prox + sentido) % jogadores.tamanho
         novo_sentido = sentido
-        # Se quiser, posso ajudar a implementar escolha de cor aqui.
     else:
         novo_indice = prox
         novo_sentido = sentido
 
     return novo_indice, novo_sentido
+
+def sortear_jogador_inicial(jogadores):
+    print("\n🔄 Sorteando quem começa o jogo...\n")
+    time.sleep(1)
+
+    voltas = random.randint(10, 20)
+    for i in range(voltas):
+        indice = i % jogadores.tamanho
+        nome = jogadores[indice].nome
+        print(f"🎯 {nome}", end="\r", flush=True)
+        time.sleep(0.1 + (i / voltas) * 0.08)
+
+    escolhido = random.randint(0, jogadores.tamanho - 1)
+    nome_escolhido = jogadores[escolhido].nome
+    print(f"\n✅ {nome_escolhido} foi sorteado para começar!{' ' * 20}\n")
+    time.sleep(2)
+    return escolhido
 
 def main():
     if len(sys.argv) > 1:
@@ -79,14 +116,19 @@ def main():
 
     print("\nCarta inicial na mesa:", carta_mesa)
 
-    indice_jogador = 0
+    indice_jogador = sortear_jogador_inicial(jogadores)
     sentido = 1
 
     while True:
         print("\n========================================")
-        print(f"Pilha de compra (deck): {mostrar_deck(baralho)}\n")
-        print(f"Cartas jogadas até agora: {', '.join(str(cartas_jogadas[i]) for i in range(cartas_jogadas.tamanho))}\n")
-        print(f"Carta atual na mesa: {carta_mesa}\n")
+        print(f"Pilha de compra (deck) [{baralho.tamanho} cartas]:")
+        print(mostrar_deck_(baralho))
+        print()  
+        if not baralho.vazio():
+            print(f"Carta no topo do deck para compra: {baralho[baralho.tamanho-1]}")
+        print(f"\nCartas descartadas [{cartas_jogadas.tamanho}]:")
+        print(mostrar_deck_(cartas_jogadas))
+        print(f"\nCarta atual na mesa: {carta_mesa}\n")
 
         print("Estado das mãos dos jogadores:")
         for i in range(jogadores.tamanho):
@@ -119,11 +161,21 @@ def main():
                     else:
                         print("Baralho vazio!")
                     break
-
                 elif escolha.isdigit():
                     idx = int(escolha)
                     carta = jogador_atual.get_carta(idx)
                     if carta and carta.combina_com(carta_mesa):
+                       
+                        if carta.valor in ["Coringa", "+4"]:
+                            cores = ["vermelho", "amarelo", "azul", "verde"]
+                            while True:
+                                cor_escolhida = input("Escolha uma cor (vermelho, amarelo, azul, verde): ").strip().lower()
+                                if cor_escolhida in cores:
+                                    carta.cor = cor_escolhida.capitalize()
+                                    print(f"Você escolheu a cor {carta.cor}.")
+                                    break
+                                else:
+                                    print("Cor inválida. Tente novamente.")
                         carta_mesa = carta
                         cartas_jogadas.inserir(carta)
                         jogador_atual.remover_carta(carta)

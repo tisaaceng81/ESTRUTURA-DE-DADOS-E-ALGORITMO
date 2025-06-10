@@ -4,19 +4,16 @@ class Jogador:
     def __init__(self, nome, humano=False):
         self.nome = nome
         self.humano = humano
-        self.mao = Vetor(capacidade=50)  # capacidade fixa para a mão
+        self.mao = Vetor(capacidade=50)  
 
     def comprar_carta(self, carta):
-        """
-        Recebe uma carta (já removida do baralho) e insere na mão.
-        Retorna True se inseriu, False caso receba None.
-        """
+        
         if carta is not None:
             self.mao.inserir(carta)
             return True
         return False
 
-    # Método alternativo, só para manter o nome que você usou no simulador
+    
     comprar_carta_com_baralho = comprar_carta
 
     def remover_carta(self, carta):
@@ -60,7 +57,8 @@ if __name__ == "__main__":
     baralho = criar_baralho()
     embaralhar(baralho)
 
-    jogador = Jogador("Alice")
+    jogador = Jogador("Jogador 1")
+    
 
     num_cartas = 7
     print(f"Jogador comprando {num_cartas} cartas do baralho...")
@@ -75,3 +73,4 @@ if __name__ == "__main__":
     print("Mão do jogador após compra:")
     jogador.mostrar_mao()
     print(f"Cartas restantes no baralho: {baralho.tamanho}")
+    

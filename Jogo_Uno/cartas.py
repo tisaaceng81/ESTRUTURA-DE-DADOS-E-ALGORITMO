@@ -16,7 +16,7 @@ class Carta:
 
 class Vetor:
     def __init__(self, capacidade=100):
-        self._dados = [None] * capacidade  # pré-alocação fixa
+        self._dados = [None] * capacidade  
         self.tamanho = 0
         self.capacidade = capacidade
 
@@ -31,7 +31,7 @@ class Vetor:
             return None
         self.tamanho -= 1
         item = self._dados[self.tamanho]
-        self._dados[self.tamanho] = None  # opcional: limpa referência
+        self._dados[self.tamanho] = None  
         return item
 
     def __getitem__(self, idx):
@@ -52,7 +52,7 @@ class Vetor:
         self.tamanho = 0
 
 def criar_baralho():
-    baralho = Vetor(capacidade=120)  # capacidade maior que total cartas
+    baralho = Vetor(capacidade=120)  
     cores = ["Vermelho", "Amarelo", "Verde", "Azul"]
     valores = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Pular", "Reverter", "+2"]
 
@@ -82,8 +82,7 @@ if __name__ == "__main__":
 
     num_cartas = 7
     print(f"Removendo {num_cartas} cartas do baralho para simular mão inicial:")
-    mao_inicial = Vetor(capacidade=num_cartas)  # capacidade exata
-
+    mao_inicial = Vetor(capacidade=num_cartas)  
     for _ in range(num_cartas):
         carta = baralho.remover()
         if carta:
@@ -94,3 +93,6 @@ if __name__ == "__main__":
         print(f"[{i}] {mao_inicial[i]}")
 
     print(f"Cartas restantes no baralho: {baralho.tamanho}")
+    print("Embaralhando a mão inicial...")
+    embaralhar(mao_inicial)
+    

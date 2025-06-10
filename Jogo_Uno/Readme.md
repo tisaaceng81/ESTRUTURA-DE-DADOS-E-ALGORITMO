@@ -46,8 +46,6 @@ O jogo está organizado em três módulos principais:
 ## Como Executar
 
 ```bash
-git clone <URL-do-repositório>
-cd <nome-do-repositório>
 
 # Executar com 7 jogadores (padrão)
 python simulador2.py
@@ -64,6 +62,25 @@ python simulador2.py 6
   * `inserir` e `remover` do fim: O(1).
   * `remover_carta` (deslocamento): O(m), onde m é tamanho da mão.
 * **Turno de jogo**: O(p × t × m), com p jogadores, t turnos e m cartas na mão.
+
+## Regras Implementadas
+
+
+---
+
+##  Algoritmo e Estrutura
+
+###  Regras Implementadas
+
+- Combinação de cartas por **cor** ou **valor**
+- Suporte a cartas especiais:
+  - `Pular` (skip)
+  - `Reverter` (reverse)
+  - `+2` e `+4`
+  - `Coringa` (escolha de cor)
+- Compra de carta se não houver jogada válida
+- Reversão de sentido do jogo
+- Detecção automática de vitória (mão vazia)
 
 ## Conclusão
 
