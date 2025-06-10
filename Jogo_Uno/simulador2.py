@@ -1,15 +1,70 @@
 import sys
 import time
-import random  
+import random
 from cartas import criar_baralho, embaralhar, Vetor, Carta
 from jogador import Jogador
+
+def carta_colorida_texto(carta):
+    cores_ansi = {
+        "Vermelho": "\033[38;2;255;0;0m",
+        "Amarelo": "\033[38;2;255;255;0m",
+        "Verde": "\033[38;2;0;128;0m",
+        "Azul": "\033[38;2;0;0;255m",
+        "Coringa": "\033[38;2;255;255;255m",
+        "Preto": "\033[38;2;0;0;0m"
+    }
+    reset = "\033[0m"
+
+    cor = carta.cor.capitalize() if carta.cor else ""
+
+    if cor == "Amarelo":
+        if carta.valor == "6":
+            texto_valor = "AM - 6"
+        elif carta.valor == "+2":
+            texto_valor = "AM - (+2)"
+        else:
+            texto_valor = f"AM - {carta.valor}"
+    elif cor == "Azul":
+        if carta.valor == "5":
+            texto_valor = "AZ - 5"
+        elif carta.valor.lower() == "pular":
+            texto_valor = "AZ - Pular"
+        else:
+            texto_valor = f"AZ - {carta.valor}"
+    elif cor == "Vermelho":
+        if carta.valor.lower() == "reverter":
+            texto_valor = "VM - Reverter"
+        else:
+            texto_valor = f"VM - {carta.valor}"
+    elif cor == "Preto":
+        if carta.valor == "+4":
+            texto_valor = "PR - (+4)"
+        else:
+            texto_valor = f"PR - {carta.valor}"
+    elif cor == "Coringa":
+        texto_valor = f"{carta.valor}"
+    
+    elif cor == "Verde":
+        if carta.valor.lower() == "reverter":
+            texto_valor = "VD - Reverter"
+        else:
+            texto_valor = f"VD - {carta.valor}"
+    else:
+        
+        # Para outras cartas (como Verde ou cor não reconhecida)
+        texto_valor = f"{carta.valor}({cor})"
+
+    cor_ansi = cores_ansi.get(cor, reset)
+
+    return f"{cor_ansi}{texto_valor}{reset}"
+
 
 def mostrar_mao(jogador):
     if jogador.mao.tamanho == 0:
         return "vazia"
     resultado = ""
     for i in range(jogador.mao.tamanho):
-        resultado += str(jogador.mao[i])
+        resultado += carta_colorida_texto(jogador.mao[i])
         if i < jogador.mao.tamanho - 1:
             resultado += ", "
     return resultado
@@ -21,7 +76,7 @@ def mostrar_deck_(baralho, max_por_linha=5):
     linha_atual = ""
     cont = 0
     for i in range(baralho.tamanho):
-        linha_atual += str(baralho[i])
+        linha_atual += carta_colorida_texto(baralho[i])
         cont += 1
         if cont < max_por_linha and i < baralho.tamanho - 1:
             linha_atual += ", "
@@ -42,16 +97,19 @@ def aplicar_efeito_carta(carta, indice_atual, sentido, jogadores, baralho):
         novo_indice = (prox + sentido) % jogadores.tamanho
         novo_sentido = sentido
         print(f"{jogadores[prox].nome} foi pulado!")
+        time.sleep(3)
     elif valor == "Reverter":
         novo_sentido = -sentido
         novo_indice = (indice_atual + novo_sentido) % jogadores.tamanho
         print("Sentido do jogo invertido!")
+        time.sleep(3)
     elif valor == "+2":
-        for _ in range(2):
+        for _ in range(3):
             if not baralho.vazio():
                 carta_comprada = baralho.remover()
                 jogadores[prox].comprar_carta_com_baralho(carta_comprada)
         print(f"{jogadores[prox].nome} comprou 2 cartas e perdeu a vez!")
+        time.sleep(3)
         novo_indice = (prox + sentido) % jogadores.tamanho
         novo_sentido = sentido
     elif valor == "+4":
@@ -60,6 +118,7 @@ def aplicar_efeito_carta(carta, indice_atual, sentido, jogadores, baralho):
                 carta_comprada = baralho.remover()
                 jogadores[prox].comprar_carta_com_baralho(carta_comprada)
         print(f"{jogadores[prox].nome} comprou 4 cartas e perdeu a vez!")
+        time.sleep(3)
         novo_indice = (prox + sentido) % jogadores.tamanho
         novo_sentido = sentido
     else:
@@ -105,6 +164,7 @@ def main():
     for i in range(1, num_jogadores):
         jogadores.inserir(Jogador(f"Jogador {i}"))
 
+    # Distribuir cartas
     for _ in range(7):
         for j in range(jogadores.tamanho):
             carta = baralho.remover()
@@ -114,7 +174,8 @@ def main():
     cartas_jogadas = Vetor(capacidade=108)
     cartas_jogadas.inserir(carta_mesa)
 
-    print("\nCarta inicial na mesa:", carta_mesa)
+    print("\nCarta inicial na mesa:", carta_colorida_texto(carta_mesa))
+    time.sleep(2)
 
     indice_jogador = sortear_jogador_inicial(jogadores)
     sentido = 1
@@ -123,12 +184,12 @@ def main():
         print("\n========================================")
         print(f"Pilha de compra (deck) [{baralho.tamanho} cartas]:")
         print(mostrar_deck_(baralho))
-        print()  
+        print()
         if not baralho.vazio():
-            print(f"Carta no topo do deck para compra: {baralho[baralho.tamanho-1]}")
+            print(f"Carta no topo do deck para compra: {carta_colorida_texto(baralho[baralho.tamanho-1])}")
         print(f"\nCartas descartadas [{cartas_jogadas.tamanho}]:")
         print(mostrar_deck_(cartas_jogadas))
-        print(f"\nCarta atual na mesa: {carta_mesa}\n")
+        print(f"\nCarta atual na mesa: {carta_colorida_texto(carta_mesa)}\n")
 
         print("Estado das mãos dos jogadores:")
         for i in range(jogadores.tamanho):
@@ -138,19 +199,21 @@ def main():
 
         jogador_atual = jogadores[indice_jogador]
         print(f"{jogador_atual.nome}, sua vez!")
+        time.sleep(3)
 
         if jogador_atual.humano:
             print("Sua mão:")
             for i in range(jogador_atual.mao.tamanho):
-                print(f"[{i}] {jogador_atual.mao[i]}")
+                print(f"[{i}] {carta_colorida_texto(jogador_atual.mao[i])}")
 
             while True:
                 escolha = input("Digite o índice da carta para jogar ou 'comprar': ").strip().lower()
                 if escolha == "comprar":
                     if not baralho.vazio():
                         nova = baralho.remover()
-                        print(f"Você comprou: {nova}")
+                        print(f"Você comprou: {carta_colorida_texto(nova)}")
                         jogador_atual.comprar_carta_com_baralho(nova)
+                        time.sleep(3)
                         if nova.combina_com(carta_mesa):
                             print("Carta jogada automaticamente!")
                             carta_mesa = nova
@@ -165,7 +228,6 @@ def main():
                     idx = int(escolha)
                     carta = jogador_atual.get_carta(idx)
                     if carta and carta.combina_com(carta_mesa):
-                       
                         if carta.valor in ["Coringa", "+4"]:
                             cores = ["vermelho", "amarelo", "azul", "verde"]
                             while True:
@@ -173,12 +235,15 @@ def main():
                                 if cor_escolhida in cores:
                                     carta.cor = cor_escolhida.capitalize()
                                     print(f"Você escolheu a cor {carta.cor}.")
+                                    time.sleep(3)
                                     break
                                 else:
                                     print("Cor inválida. Tente novamente.")
                         carta_mesa = carta
                         cartas_jogadas.inserir(carta)
                         jogador_atual.remover_carta(carta)
+                        print(f"Você jogou {carta_colorida_texto(carta)}")
+                        time.sleep(3)
                         break
                     else:
                         print("Carta inválida! Escolha outra ou compre.")
@@ -187,25 +252,26 @@ def main():
         else:
             carta = jogador_atual.escolher_carta(carta_mesa)
             if carta:
-                print(f"{jogador_atual.nome} jogou {carta}")
+                print(f"{jogador_atual.nome} jogou {carta_colorida_texto(carta)}")
                 carta_mesa = carta
                 cartas_jogadas.inserir(carta)
                 jogador_atual.remover_carta(carta)
+                time.sleep(3)
             else:
                 if not baralho.vazio():
                     nova = baralho.remover()
                     jogador_atual.comprar_carta_com_baralho(nova)
                     print(f"{jogador_atual.nome} comprou uma carta.")
+                    time.sleep(3)
                 else:
                     print(f"{jogador_atual.nome} passou a vez (baralho vazio).")
+                    time.sleep(3)
 
-        if jogador_atual.mao_vazia():
-            print(f"\n{jogador_atual.nome} venceu o jogo!")
+        if jogador_atual.mao.tamanho == 0:
+            print(f"\n🎉 {jogador_atual.nome} venceu o jogo! Parabéns! 🎉")
             break
 
         indice_jogador, sentido = aplicar_efeito_carta(carta_mesa, indice_jogador, sentido, jogadores, baralho)
-
-        time.sleep(3)
 
 if __name__ == "__main__":
     main()

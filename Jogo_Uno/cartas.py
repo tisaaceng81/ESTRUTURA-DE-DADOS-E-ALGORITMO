@@ -67,11 +67,58 @@ def criar_baralho():
         baralho.inserir(Carta("Preto", "+4"))
 
     return baralho
+
 def embaralhar(vetor):
     n = vetor.tamanho
     for i in range(n - 1, 0, -1):
         j = random.randint(0, i)
         vetor[i], vetor[j] = vetor[j], vetor[i]
+
+# Função para colorir as cartas vermelhas, amarelas, verdes e azuis usando ANSI RGB
+def carta_colorida_texto(carta):
+    cores_rgb = {
+        "VM": (255, 0, 0),
+        "AM": (255, 255, 0),
+        "AZ": (0, 0, 255),
+        "VD": (0, 128, 0),
+    }
+    cor = carta.cor.capitalize() if hasattr(carta, 'cor') else ""
+    texto = str(carta)
+    if cor in cores_rgb:
+        r, g, b = cores_rgb[cor]
+        return f"\033[38;2;{r};{g};{b}m{texto}\033[0m"
+    else:
+        return texto
+
+def mostrar_mao(mao):
+    if mao.tamanho == 0:
+        return "vazia"
+    resultado = ""
+    for i in range(mao.tamanho):
+        resultado += carta_colorida_texto(mao[i])
+        if i < mao.tamanho - 1:
+            resultado += ", "
+    return resultado
+
+def mostrar_deck_(baralho, max_por_linha=5):
+    if baralho.vazio():
+        return "Baralho vazio"
+    linhas = Vetor(capacidade=(baralho.tamanho // max_por_linha + 1))
+    linha_atual = ""
+    cont = 0
+    for i in range(baralho.tamanho):
+        linha_atual += carta_colorida_texto(baralho[i])
+        cont += 1
+        if cont < max_por_linha and i < baralho.tamanho - 1:
+            linha_atual += ", "
+        if cont == max_por_linha or i == baralho.tamanho - 1:
+            linhas.inserir(linha_atual)
+            linha_atual = ""
+            cont = 0
+    resultado = ""
+    for i in range(linhas.tamanho):
+        resultado += linhas[i] + "\n"
+    return resultado.rstrip("\n")
 
 if __name__ == "__main__":
     print("=== Teste módulo cartas ===")
@@ -89,10 +136,10 @@ if __name__ == "__main__":
             mao_inicial.inserir(carta)
 
     print("Mão inicial:")
-    for i in range(mao_inicial.tamanho):
-        print(f"[{i}] {mao_inicial[i]}")
+    print(mostrar_mao(mao_inicial))
 
     print(f"Cartas restantes no baralho: {baralho.tamanho}")
     print("Embaralhando a mão inicial...")
     embaralhar(mao_inicial)
-    
+    print("Mão embaralhada:")
+    print(mostrar_mao(mao_inicial))

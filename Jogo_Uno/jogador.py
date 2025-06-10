@@ -1,5 +1,21 @@
 from cartas import Vetor, Carta
 
+# Função para colorir cartas (mesma usada em cartas.py)
+def carta_colorida_texto(carta):
+    cores_rgb = {
+        "Vermelho": (255, 0, 0),
+        "Amarelo": (255, 255, 0),
+        "Azul": (0, 0, 255),
+        "Verde": (0, 128, 0),
+    }
+    cor = carta.cor.capitalize() if hasattr(carta, 'cor') else ""
+    texto = str(carta)
+    if cor in cores_rgb:
+        r, g, b = cores_rgb[cor]
+        return f"\033[38;2;{r};{g};{b}m{texto}\033[0m"
+    else:
+        return texto
+
 class Jogador:
     def __init__(self, nome, humano=False):
         self.nome = nome
@@ -7,13 +23,11 @@ class Jogador:
         self.mao = Vetor(capacidade=50)  
 
     def comprar_carta(self, carta):
-        
         if carta is not None:
             self.mao.inserir(carta)
             return True
         return False
 
-    
     comprar_carta_com_baralho = comprar_carta
 
     def remover_carta(self, carta):
@@ -26,7 +40,7 @@ class Jogador:
 
     def mostrar_mao(self):
         for i in range(self.mao.tamanho):
-            print(f"[{i}] {self.mao[i]}")
+            print(f"[{i}] {carta_colorida_texto(self.mao[i])}")
 
     def get_carta(self, idx):
         return self.mao[idx] if 0 <= idx < self.mao.tamanho else None
@@ -58,7 +72,6 @@ if __name__ == "__main__":
     embaralhar(baralho)
 
     jogador = Jogador("Jogador 1")
-    
 
     num_cartas = 7
     print(f"Jogador comprando {num_cartas} cartas do baralho...")
@@ -73,4 +86,3 @@ if __name__ == "__main__":
     print("Mão do jogador após compra:")
     jogador.mostrar_mao()
     print(f"Cartas restantes no baralho: {baralho.tamanho}")
-    
