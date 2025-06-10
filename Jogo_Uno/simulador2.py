@@ -28,7 +28,7 @@ def carta_colorida_texto(carta):
         if carta.valor == "5":
             texto_valor = "C-(5)"
         elif carta.valor.lower() == "pular":
-            texto_valor = "C-(Pular)6"
+            texto_valor = "C-(Pular)"
         else:
             texto_valor = f"C-({carta.valor})"
     elif cor == "Vermelho":
