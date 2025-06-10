@@ -51,7 +51,6 @@ def carta_colorida_texto(carta):
             texto_valor = f"VD - {carta.valor}"
     else:
         
-        # Para outras cartas (como Verde ou cor não reconhecida)
         texto_valor = f"{carta.valor}({cor})"
 
     cor_ansi = cores_ansi.get(cor, reset)
