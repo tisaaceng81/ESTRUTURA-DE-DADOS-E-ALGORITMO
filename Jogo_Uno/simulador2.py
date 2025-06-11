@@ -6,17 +6,20 @@ from jogador import Jogador
 
 def carta_colorida_texto(carta):
     cores_ansi = {
-        "Vermelho": "\033[38;2;255;0;0m",
-        "Amarelo": "\033[38;2;255;255;0m",
-        "Verde": "\033[38;2;0;128;0m",
-        "Azul": "\033[38;2;0;0;255m",
-        "Coringa": "\033[38;2;255;255;255m",
-        "Preto": "\033[38;2;0;0;0m"
+        "Vermelho": ("\033[91m", "C "),
+        "Amarelo": ("\033[93m", "C "),
+        "Azul": ("\033[94m", "C "),
+        "Verde": ("\033[92m", "C "),
     }
-    reset = "\033[0m"
 
-    cor = carta.cor.capitalize() if carta.cor else ""
+    cor = carta.cor.capitalize() if hasattr(carta, 'cor') else ""
+    valor = str(carta.valor) if hasattr(carta, 'valor') else "C "
 
+    if cor in cores_ansi:
+        cor_ansi, letra_cor = cores_ansi[cor]
+        return f"{cor_ansi}{letra_cor}{valor}\033[0m"
+    else:
+        return f"C{valor}"  
     if cor == "Amarelo":
         if carta.valor == "6":
             texto_valor = "C-(6)"
