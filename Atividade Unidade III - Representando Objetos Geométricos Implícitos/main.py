@@ -10,68 +10,37 @@ from curvas import lista_curvas
 from pyglet.window import key
 from pyglet.gl import glClearColor  # Função para definir cor de fundo da janela
 
-
-# Define as dimensões da janela da aplicação gráfica
 LARGURA_JANELA, ALTURA_JANELA = 800, 800
 
 def gerar_faixa(inicio, fim, passo):
-    """
-    Função geradora que cria uma faixa de números de 'inicio' até 'fim' com
-    incrementos de 'passo'. Útil para criar intervalos iterativos.
-    """
     while inicio < fim:
         yield inicio
         inicio += passo
 
 class Visualizador:
-    """
-    Classe responsável pela criação da janela, controle dos modos de visualização,
-    desenho da árvore VDB e da curva implícita na tela.
-    """
     def __init__(self, curva, largura=LARGURA_JANELA, altura=ALTURA_JANELA, profundidade=6, modo=1):
-        # Inicializa atributos básicos: dimensões, curva, profundidade da árvore e modo visual
         self.largura = largura
         self.altura = altura
         self.profundidade = profundidade
         self.curva = curva
-
-        # Cria a janela gráfica com título baseado no nome da curva
         self.janela = pyglet.window.Window(largura, altura)
         self.janela.set_caption(f"VDB - {curva.obter(0)}")
-
-        # Define a cor de fundo da janela (branco)
         glClearColor(1,1,1,1)
-
-        # Cria um batch para agrupar desenhos (melhora performance)
         self.batch = pyglet.graphics.Batch()
-        # Estrutura para armazenar objetos desenhados (forma de vetor limitado)
         self.formas = ArrayLimitado(10000)
-
-        # Cria a árvore VDB com profundidade e divisão especificadas
         self.arvore = EstruturaVDB(profundidade, 4)
-        # Constroi a árvore a partir da função da curva
         self.arvore.construir_estrutura(curva.obter(1))
-
-        # Define o modo inicial de visualização e o nível para modo por nível
         self.modo_visualizacao = modo
         self.nivel_visualizacao = 0
-
-        # Registra os eventos da janela: desenhar e tecla pressionada
         self.janela.push_handlers(
             on_draw=self.ao_desenhar,
             on_key_press=self.ao_pressionar_tecla
         )
 
     def ao_desenhar(self):
-        """
-        Método chamado automaticamente pela biblioteca pyglet para redesenhar a janela.
-        Ele limpa a tela e desenha a estrutura de acordo com o modo de visualização selecionado.
-        """
         self.janela.clear()
-        self.formas.resetar()  # Limpa a lista de formas armazenadas
-        self.batch = pyglet.graphics.Batch()  # Reinicia o batch para novos desenhos
-
-        # Desenha a árvore ou curva conforme o modo selecionado
+        self.formas.resetar()
+        self.batch = pyglet.graphics.Batch()
         if self.modo_visualizacao == 1:
             self.desenhar_no_recursivamente(self.arvore.raiz)
         elif self.modo_visualizacao == 2:
@@ -80,20 +49,10 @@ class Visualizador:
             self.desenhar_folhas_fronteira(self.arvore.raiz)
         else:
             self.desenhar_curva()
-
-        # Garante que a curva sempre seja desenhada sobre a árvore
         self.desenhar_curva()
-        # Executa o desenho de todos os objetos acumulados no batch
         self.batch.draw()
 
     def ao_pressionar_tecla(self, simbolo, modificadores):
-        """
-        Método chamado quando o usuário pressiona uma tecla.
-        Modifica o modo de visualização ou ajusta o nível quando em modo por nível.
-        """
-        
-
-        # Alterna entre os modos de visualização com as teclas 1 a 4
         if simbolo == key._1:
             self.modo_visualizacao = 1
             print("Modo: Árvore completa")
@@ -106,8 +65,6 @@ class Visualizador:
         elif simbolo == key._4:
             self.modo_visualizacao = 4
             print("Modo: Apenas curva")
-
-        # Se estiver no modo por nível, permite aumentar ou diminuir o nível com as setas ↑ ↓
         if self.modo_visualizacao == 2:
             if simbolo == key.UP:
                 self.nivel_visualizacao = min(self.nivel_visualizacao + 1, self.profundidade)
@@ -117,17 +74,11 @@ class Visualizador:
                 print(f"Nível selecionado: {self.nivel_visualizacao}")
 
     def desenhar_no_recursivamente(self, no):
-        """
-        Desenha o nó atual e seus filhos recursivamente, explorando toda a árvore.
-        """
         self.desenhar_retangulo(no)
         for i in range(len(no.sub_nos)):
             self.desenhar_no_recursivamente(no.sub_nos.obter(i))
 
     def desenhar_por_nivel(self, no, nivel):
-        """
-        Desenha apenas os nós no nível especificado.
-        """
         if no.nivel == nivel:
             self.desenhar_retangulo(no)
         elif no.nivel < nivel:
@@ -135,9 +86,6 @@ class Visualizador:
                 self.desenhar_por_nivel(no.sub_nos.obter(i), nivel)
 
     def desenhar_folhas_fronteira(self, no):
-        """
-        Desenha somente as folhas que estão na fronteira da árvore.
-        """
         if len(no.sub_nos) > 0:
             for i in range(len(no.sub_nos)):
                 self.desenhar_folhas_fronteira(no.sub_nos.obter(i))
@@ -145,79 +93,55 @@ class Visualizador:
             self.desenhar_retangulo(no)
 
     def desenhar_retangulo(self, no):
-        """
-        Desenha um retângulo colorido representando o nó da árvore,
-        usando uma paleta de cores para diferenciar os níveis.
-        """
-        escala_x = self.largura / 4  # Ajusta escala horizontal para coordenadas do nó
-        escala_y = self.altura / 4   # Ajusta escala vertical para coordenadas do nó
-
-        # Converte as coordenadas do nó para coordenadas da janela
+        escala_x = self.largura / 4
+        escala_y = self.altura / 4
         x = int((no.x + 2) * escala_x)
         y = int((no.y + 2) * escala_y)
         largura = int(no.largura * escala_x)
         altura = int(no.altura * escala_y)
 
-        # Paleta de cores fixa para os níveis da árvore
         paleta_cores = ArrayLimitado(7)
-        paleta_cores.adicionar(0, (255, 0, 0))       # Vermelho
-        paleta_cores.adicionar(1, (0, 255, 0))       # Verde
-        paleta_cores.adicionar(2, (0, 0, 255))       # Azul
-        paleta_cores.adicionar(3, (255, 165, 0))     # Laranja
-        paleta_cores.adicionar(4, (128, 0, 128))     # Roxo
-        paleta_cores.adicionar(5, (0, 255, 255))     # Ciano
-        paleta_cores.adicionar(6, (255, 192, 203))   # Rosa
+        paleta_cores.adicionar(0, (255, 0, 0))
+        paleta_cores.adicionar(1, (0, 255, 0))
+        paleta_cores.adicionar(2, (0, 0, 255))
+        paleta_cores.adicionar(3, (255, 165, 0))
+        paleta_cores.adicionar(4, (128, 0, 128))
+        paleta_cores.adicionar(5, (0, 255, 255))
+        paleta_cores.adicionar(6, (255, 192, 203))
 
-        cor = paleta_cores.obter(no.nivel % 7)  # Seleciona a cor baseada no nível do nó
-
-        # Cria o retângulo que representa o nó na tela
+        cor = paleta_cores.obter(no.nivel % 7)
         retangulo = shapes.Rectangle(x, y, largura, altura, color=cor, batch=self.batch)
-        retangulo.opacity = 120  # Transparência para melhor visualização
-        self.formas.adicionar(len(self.formas), retangulo)  # Armazena o retângulo para controle
+        retangulo.opacity = 120
+        self.formas.adicionar(len(self.formas), retangulo)
 
-        # Desenha as bordas do retângulo usando linhas pretas
         linhas = ArrayLimitado(4)
-        linhas.adicionar(len(linhas), shapes.Line(x, y, x+largura, y, width=1, color=(0,0,0), batch=self.batch))
-        linhas.adicionar(len(linhas), shapes.Line(x+largura, y, x+largura, y+altura, width=1, color=(0,0,0), batch=self.batch))
-        linhas.adicionar(len(linhas), shapes.Line(x+largura, y+altura, x, y+altura, width=1, color=(0,0,0), batch=self.batch))
-        linhas.adicionar(len(linhas), shapes.Line(x, y+altura, x, y, width=1, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x, y, x+largura, y, thickness=1, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x+largura, y, x+largura, y+altura, thickness=1, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x+largura, y+altura, x, y+altura, thickness=1, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x, y+altura, x, y, thickness=1, color=(0,0,0), batch=self.batch))
 
-        # Adiciona as linhas à lista de formas para serem desenhadas
         for i in range(len(linhas)):
             self.formas.adicionar(len(self.formas), linhas.obter(i))
 
     def desenhar_curva(self):
-        """
-        Desenha a curva implícita na janela verificando pontos próximos de zero
-        na função da curva, usando um passo fixo para varrer o espaço.
-        """
-        escala_x = self.largura / 4  # Escala horizontal
-        escala_y = self.altura / 4   # Escala vertical
-        passo = 0.01                 # Incremento para varredura dos pontos
-        x_atual = -2                 # Início da varredura em x
-        while x_atual < 2:           # Vai até x=2
-            y_atual = -2            # Para cada x, varre y de -2 a 2
+        escala_x = self.largura / 4
+        escala_y = self.altura / 4
+        passo = 0.01
+        x_atual = -2
+        while x_atual < 2:
+            y_atual = -2
             while y_atual < 2:
-                # Verifica se o valor da função da curva está próximo de zero (contorno)
                 if abs(self.curva.obter(1)(x_atual, y_atual)) < 0.01:
-                    # Calcula posição na janela para desenhar o ponto
                     px = int((x_atual + 2) * escala_x)
                     py = int((y_atual + 2) * escala_y)
-                    # Desenha um pequeno círculo preto representando o ponto da curva
                     ponto = shapes.Circle(px, py, 1, color=(0,0,0), batch=self.batch)
                     self.formas.adicionar(len(self.formas), ponto)
                 y_atual += passo
             x_atual += passo
 
 def main():
-    """
-    Função principal que controla a execução do programa.
-    Permite passar argumentos para escolher curva e modo,
-    ou exibe menu interativo para o usuário escolher.
-    """
     argumentos = sys.argv[1:]
     if argumentos:
-        # Tenta interpretar o primeiro argumento como índice da curva
         try:
             idx = int(argumentos[0])
             if not (0 <= idx < len(lista_curvas)):
@@ -227,7 +151,6 @@ def main():
             print("O primeiro argumento deve ser um número inteiro correspondente à curva.")
             return
 
-        # Define modo de visualização, pode ser passado como segundo argumento
         modo_vis = 1
         if len(argumentos) > 1:
             try:
@@ -238,32 +161,25 @@ def main():
             except:
                 print("Segundo argumento deve ser um número de modo (1 a 4). Usando modo padrão 1.")
 
-        # Exibe informações da curva selecionada e valor em ponto teste
         print(f"Curva selecionada: {lista_curvas.obter(idx).obter(0)}")
         x_teste, y_teste = 1, 0
         val = lista_curvas.obter(idx).obter(1)(x_teste, y_teste)
         print(f"Valor da curva {lista_curvas.obter(idx).obter(0)} em ({x_teste},{y_teste}): {val}")
 
-        # Cria o visualizador e inicia a janela
         visual = Visualizador(lista_curvas.obter(idx), modo=modo_vis)
         print("Janela aberta. Feche para encerrar.")
         pyglet.app.run()
-
     else:
-        # Menu interativo para seleção de curvas
         while True:
             print("\nCurvas disponíveis:")
             for i in range(len(lista_curvas)):
                 curva = lista_curvas.obter(i)
                 nome_curva = curva.obter(0)
                 print(f"{i}: {nome_curva}")
-
             escolha = input("Escolha a curva pelo número (ou 's' para sair): ").strip().lower()
             if escolha == 's':
                 print("Finalizando programa...")
                 return
-
-            # Valida a entrada do usuário
             try:
                 idx = int(escolha)
                 if 0 <= idx < len(lista_curvas):
@@ -275,21 +191,17 @@ def main():
                 print("Entrada inválida. Digite um número ou 's' para sair.")
                 continue
 
-            # Exibe detalhes da curva escolhida
             print(f"Curva selecionada: {lista_curvas.obter(idx).obter(0)}")
-
             x_teste, y_teste = 1, 0
             val = lista_curvas.obter(idx).obter(1)(x_teste, y_teste)
             print(f"Valor da curva {lista_curvas.obter(idx).obter(0)} em ({x_teste},{y_teste}): {val}")
 
-            # Cria e mostra a janela com a curva selecionada
             visual = Visualizador(lista_curvas.obter(idx))
             print("\nControles de visualização:")
             print("1 - Árvore completa")
             print("2 - Por nível (use ↑ ↓ para ajustar)")
             print("3 - Folhas na fronteira")
             print("4 - Apenas curva")
-
             print("Pressione a tecla correspondente para alternar modos na janela.")
             pyglet.app.run()
 
