@@ -1,64 +1,48 @@
 # vetor.py
-# Implementa uma estrutura de vetor com capacidade fixa,
-# para substituir listas nativas, conforme usado em seus módulos.
+# Implementa uma estrutura de array limitado, que não cresce automaticamente.
+# Não usa listas nativas do Python para armazenamento interno.
+# Permite adicionar e obter elementos por índice, com limite fixo de capacidade.
 
 class ArrayLimitado:
     def __init__(self, capacidade):
         """
-        Inicializa o vetor limitado com uma capacidade fixa.
+        Inicializa o ArrayLimitado com capacidade fixa.
         """
-        self.capacidade = capacidade                # Capacidade máxima do vetor
-        self.dados = [None] * capacidade            # Lista interna para armazenar os elementos
-        self.tamanho = 0                            # Quantidade atual de elementos armazenados
+        self.capacidade = capacidade
+        self.itens = [None] * capacidade  # Array fixo com None inicialmente
+        self.tamanho_atual = 0             # Quantidade atual de elementos adicionados
 
     def adicionar(self, indice, valor):
         """
-        Adiciona um valor no índice especificado, deslocando os elementos à direita.
+        Adiciona o valor na posição especificada se dentro da capacidade.
+        Se indice == tamanho_atual, significa adicionar no final.
         """
-        if self.tamanho >= self.capacidade:
-            raise Exception("Capacidade máxima atingida.")    # Evita overflow
-        if indice < 0 or indice > self.tamanho:
-            raise IndexError("Índice fora do intervalo para inserção.")  # Valida índice
-        
-        # Desloca elementos para a direita para abrir espaço na posição 'indice'
-        for i in range(self.tamanho, indice, -1):
-            self.dados[i] = self.dados[i - 1]
-        
-        self.dados[indice] = valor   # Insere o novo valor
-        self.tamanho += 1            # Incrementa tamanho atual
-
-    def remover(self, indice):
-        """
-        Remove o elemento no índice especificado, deslocando elementos à esquerda para preencher o vazio.
-        """
-        if indice < 0 or indice >= self.tamanho:
-            raise IndexError("Índice fora do intervalo para remoção.")  # Valida índice
-        
-        # Desloca elementos para a esquerda para preencher a lacuna
-        for i in range(indice, self.tamanho - 1):
-            self.dados[i] = self.dados[i + 1]
-        
-        self.dados[self.tamanho - 1] = None  # Limpa a última posição
-        self.tamanho -= 1                    # Decrementa o tamanho atual
+        if indice < 0 or indice >= self.capacidade:
+            raise IndexError("Índice fora do limite da capacidade")
+        if indice > self.tamanho_atual:
+            raise IndexError("Índice inválido para adicionar")
+        self.itens[indice] = valor
+        # Atualiza o tamanho se adicionou na próxima posição disponível
+        if indice == self.tamanho_atual:
+            self.tamanho_atual += 1
 
     def obter(self, indice):
         """
-        Retorna o elemento armazenado no índice especificado.
+        Retorna o elemento armazenado no índice dado.
         """
-        if 0 <= indice < self.tamanho:
-            return self.dados[indice]
-        else:
-            raise IndexError("Índice fora do intervalo.")  # Valida índice
-
-    def __len__(self):
-        """
-        Retorna o número atual de elementos no vetor.
-        """
-        return self.tamanho
+        if indice < 0 or indice >= self.tamanho_atual:
+            raise IndexError("Índice fora do tamanho atual")
+        return self.itens[indice]
 
     def resetar(self):
         """
-        Limpa o vetor, removendo todos os elementos e zerando tamanho.
+        Reseta o array para estado vazio, mas mantém a capacidade.
         """
-        self.dados = [None] * self.capacidade
-        self.tamanho = 0
+        self.itens = [None] * self.capacidade
+        self.tamanho_atual = 0
+
+    def __len__(self):
+        """
+        Retorna o número de elementos efetivamente armazenados.
+        """
+        return self.tamanho_atual
