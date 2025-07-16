@@ -3,7 +3,6 @@
 # em estruturas do tipo ArrayLimitado, evitando listas nativas.
 
 from vetor import ArrayLimitado  # Importa a estrutura limitada
-import math
 
 # Equação de uma superelipse
 def superelipse_eq(x, y, a=1.5, b=1.0, n=2.5):

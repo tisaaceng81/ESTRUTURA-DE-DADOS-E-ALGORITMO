@@ -9,6 +9,7 @@ from arvore_vdb import EstruturaVDB
 from curvas import lista_curvas
 from pyglet.window import key
 from pyglet.gl import glClearColor  # Função para definir cor de fundo da janela
+from objetosGeometricos import cPonto, cRect, cCor # Importa as classes do módulo objetosGeometricos
 
 
 # Define as dimensões da janela da aplicação gráfica
@@ -48,7 +49,7 @@ class Visualizador:
         self.formas = ArrayLimitado(10000)
 
         # Cria a árvore VDB com profundidade e divisão especificadas
-        self.arvore = EstruturaVDB(profundidade, 4)
+        self.arvore = EstruturaVDB(profundidade, 4) # O 4 aqui é o tamanho_espaco do retangulo raiz
         # Constroi a árvore a partir da função da curva
         self.arvore.construir_estrutura(curva.obter(1))
 
@@ -79,7 +80,8 @@ class Visualizador:
         elif self.modo_visualizacao == 3:
             self.desenhar_folhas_fronteira(self.arvore.raiz)
         else:
-            self.desenhar_curva()
+            # Se o modo for 4 (apenas curva), não desenha a estrutura da árvore
+            pass # A curva é desenhada de qualquer forma após este if/elif/else
 
         # Garante que a curva sempre seja desenhada sobre a árvore
         self.desenhar_curva()
@@ -92,7 +94,6 @@ class Visualizador:
         Modifica o modo de visualização ou ajusta o nível quando em modo por nível.
         """
         
-
         # Alterna entre os modos de visualização com as teclas 1 a 4
         if simbolo == key._1:
             self.modo_visualizacao = 1
@@ -138,6 +139,7 @@ class Visualizador:
         """
         Desenha somente as folhas que estão na fronteira da árvore.
         """
+        # Verifica se o nó é uma folha (não tem subnós)
         if len(no.sub_nos) > 0:
             for i in range(len(no.sub_nos)):
                 self.desenhar_folhas_fronteira(no.sub_nos.obter(i))
@@ -149,14 +151,22 @@ class Visualizador:
         Desenha um retângulo colorido representando o nó da árvore,
         usando uma paleta de cores para diferenciar os níveis.
         """
-        escala_x = self.largura / 4  # Ajusta escala horizontal para coordenadas do nó
-        escala_y = self.altura / 4   # Ajusta escala vertical para coordenadas do nó
+        escala_x = self.largura / self.arvore.tamanho_espaco  # Ajusta escala horizontal para coordenadas do nó
+        escala_y = self.altura / self.arvore.tamanho_espaco   # Ajusta escala vertical para coordenadas do nó
+
+        # Obtém as coordenadas e dimensões do retângulo do nó
+        x_base = no.retangulo.getPtoBase().getX()
+        y_base = no.retangulo.getPtoBase().getY()
+        largura_ret = no.retangulo.getWidth()
+        altura_ret = no.retangulo.getHeight()
 
         # Converte as coordenadas do nó para coordenadas da janela
-        x = int((no.x + 2) * escala_x)
-        y = int((no.y + 2) * escala_y)
-        largura = int(no.largura * escala_x)
-        altura = int(no.altura * escala_y)
+        # O espaço vai de -tamanho_espaco/2 a tamanho_espaco/2. Para mapear para 0 a largura/altura da janela,
+        # adicionamos tamanho_espaco/2 antes de multiplicar pela escala.
+        x = int((x_base + self.arvore.tamanho_espaco / 2) * escala_x)
+        y = int((y_base + self.arvore.tamanho_espaco / 2) * escala_y)
+        largura = int(largura_ret * escala_x)
+        altura = int(altura_ret * escala_y)
 
         # Paleta de cores fixa para os níveis da árvore
         paleta_cores = ArrayLimitado(7)
@@ -168,19 +178,22 @@ class Visualizador:
         paleta_cores.adicionar(5, (0, 255, 255))     # Ciano
         paleta_cores.adicionar(6, (255, 192, 203))   # Rosa
 
-        cor = paleta_cores.obter(no.nivel % 7)  # Seleciona a cor baseada no nível do nó
-
+        # Obtém a cor como uma tupla RGB
+        cor_rgb = paleta_cores.obter(no.nivel % 7)
+        # No_vdb armazena a cor como cCor, mas para shapes.Rectangle precisamos de uma tupla
+        # no.cor.setCor(*cor_rgb) # Se você quisesse atribuir a cor ao nó, mas não é necessário aqui
+        
         # Cria o retângulo que representa o nó na tela
-        retangulo = shapes.Rectangle(x, y, largura, altura, color=cor, batch=self.batch)
+        retangulo = shapes.Rectangle(x, y, largura, altura, color=cor_rgb, batch=self.batch)
         retangulo.opacity = 120  # Transparência para melhor visualização
         self.formas.adicionar(len(self.formas), retangulo)  # Armazena o retângulo para controle
 
         # Desenha as bordas do retângulo usando linhas pretas
         linhas = ArrayLimitado(4)
-        linhas.adicionar(len(linhas), shapes.Line(x, y, x+largura, y, color=(0,0,0), batch=self.batch))
-        linhas.adicionar(len(linhas), shapes.Line(x+largura, y, x+largura, y+altura, color=(0,0,0), batch=self.batch))
-        linhas.adicionar(len(linhas), shapes.Line(x+largura, y+altura, x, y+altura, color=(0,0,0), batch=self.batch))
-        linhas.adicionar(len(linhas), shapes.Line(x, y+altura, x, y, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x, y, x+largura, y, width=1, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x+largura, y, x+largura, y+altura, width=1, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x+largura, y+altura, x, y+altura, width=1, color=(0,0,0), batch=self.batch))
+        linhas.adicionar(len(linhas), shapes.Line(x, y+altura, x, y, width=1, color=(0,0,0), batch=self.batch))
 
         # Adiciona as linhas à lista de formas para serem desenhadas
         for i in range(len(linhas)):
@@ -191,18 +204,26 @@ class Visualizador:
         Desenha a curva implícita na janela verificando pontos próximos de zero
         na função da curva, usando um passo fixo para varrer o espaço.
         """
-        escala_x = self.largura / 4  # Escala horizontal
-        escala_y = self.altura / 4   # Escala vertical
+        escala_x = self.largura / self.arvore.tamanho_espaco  # Escala horizontal
+        escala_y = self.altura / self.arvore.tamanho_espaco   # Escala vertical
         passo = 0.01                 # Incremento para varredura dos pontos
-        x_atual = -2                 # Início da varredura em x
-        while x_atual < 2:           # Vai até x=2
-            y_atual = -2            # Para cada x, varre y de -2 a 2
-            while y_atual < 2:
+        
+        # O espaço de trabalho é de -tamanho_espaco/2 a tamanho_espaco/2 em X e Y
+        x_min = -self.arvore.tamanho_espaco / 2
+        x_max = self.arvore.tamanho_espaco / 2
+        y_min = -self.arvore.tamanho_espaco / 2
+        y_max = self.arvore.tamanho_espaco / 2
+        
+        x_atual = x_min
+        while x_atual < x_max:
+            y_atual = y_min
+            while y_atual < y_max:
                 # Verifica se o valor da função da curva está próximo de zero (contorno)
                 if abs(self.curva.obter(1)(x_atual, y_atual)) < 0.01:
                     # Calcula posição na janela para desenhar o ponto
-                    px = int((x_atual + 2) * escala_x)
-                    py = int((y_atual + 2) * escala_y)
+                    # Mapeia de [-tamanho_espaco/2, tamanho_espaco/2] para [0, largura/altura] da janela
+                    px = int((x_atual - x_min) * escala_x)
+                    py = int((y_atual - y_min) * escala_y)
                     # Desenha um pequeno círculo preto representando o ponto da curva
                     ponto = shapes.Circle(px, py, 1, color=(0,0,0), batch=self.batch)
                     self.formas.adicionar(len(self.formas), ponto)
@@ -240,7 +261,13 @@ def main():
 
         # Exibe informações da curva selecionada e valor em ponto teste
         print(f"Curva selecionada: {lista_curvas.obter(idx).obter(0)}")
-        x_teste, y_teste = 1, 0
+        
+        # Crie um cPonto para o teste, embora as coordenadas x, y sejam suficientes para a função da curva.
+        # A classe cPonto é mais relevante para o desenho e estrutura da árvore.
+        # x_teste, y_teste = 1, 0 # Pode continuar assim se a função da curva espera apenas x, y
+        ponto_teste = cPonto(1, 0) # Ou usar cPonto diretamente se a função da curva esperasse um Ponto2D
+        x_teste, y_teste = ponto_teste.getX(), ponto_teste.getY() # Acessando as coordenadas do cPonto
+
         val = lista_curvas.obter(idx).obter(1)(x_teste, y_teste)
         print(f"Valor da curva {lista_curvas.obter(idx).obter(0)} em ({x_teste},{y_teste}): {val}")
 
@@ -278,7 +305,9 @@ def main():
             # Exibe detalhes da curva escolhida
             print(f"Curva selecionada: {lista_curvas.obter(idx).obter(0)}")
 
-            x_teste, y_teste = 1, 0
+            ponto_teste = cPonto(1, 0) # Usando cPonto
+            x_teste, y_teste = ponto_teste.getX(), ponto_teste.getY() # Acessando as coordenadas do cPonto
+
             val = lista_curvas.obter(idx).obter(1)(x_teste, y_teste)
             print(f"Valor da curva {lista_curvas.obter(idx).obter(0)} em ({x_teste},{y_teste}): {val}")
 
