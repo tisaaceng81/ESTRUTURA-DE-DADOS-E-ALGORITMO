@@ -1,42 +1,64 @@
+# vetor.py
+# Implementa uma estrutura de vetor com capacidade fixa,
+# para substituir listas nativas, conforme usado em seus módulos.
+
 class ArrayLimitado:
-    def __init__(self, max_tam):
-        # Inicializa um array com tamanho máximo fixo, elementos None inicialmente
-        self.max_tam = max_tam
-        self.elementos = [None] * max_tam
-        self.atual_tam = 0  # Quantidade atual de elementos válidos
+    def __init__(self, capacidade):
+        """
+        Inicializa o vetor limitado com uma capacidade fixa.
+        """
+        self.capacidade = capacidade                # Capacidade máxima do vetor
+        self.dados = [None] * capacidade            # Lista interna para armazenar os elementos
+        self.tamanho = 0                            # Quantidade atual de elementos armazenados
 
     def adicionar(self, indice, valor):
-        # Insere valor na posição indice, deslocando elementos para frente
-        if self.atual_tam >= self.max_tam:
-            raise OverflowError("Array está cheio")  # Não permite ultrapassar capacidade
-        if indice < 0 or indice > self.atual_tam:
-            raise IndexError("Índice fora do permitido")  # Checa limites válidos para inserção
+        """
+        Adiciona um valor no índice especificado, deslocando os elementos à direita.
+        """
+        if self.tamanho >= self.capacidade:
+            raise Exception("Capacidade máxima atingida.")    # Evita overflow
+        if indice < 0 or indice > self.tamanho:
+            raise IndexError("Índice fora do intervalo para inserção.")  # Valida índice
         
-        # Desloca elementos para frente a partir do fim até o índice onde será inserido
-        for i in range(self.atual_tam, indice, -1):
-            self.elementos[i] = self.elementos[i-1]
+        # Desloca elementos para a direita para abrir espaço na posição 'indice'
+        for i in range(self.tamanho, indice, -1):
+            self.dados[i] = self.dados[i - 1]
         
-        # Insere o valor no índice
-        self.elementos[indice] = valor
-        self.atual_tam += 1  # Incrementa tamanho atual
+        self.dados[indice] = valor   # Insere o novo valor
+        self.tamanho += 1            # Incrementa tamanho atual
 
-    def resetar(self):
-        # Limpa o array definindo os elementos válidos para None e tamanho zero
-        for i in range(self.atual_tam):
-            self.elementos[i] = None
-        self.atual_tam = 0
+    def remover(self, indice):
+        """
+        Remove o elemento no índice especificado, deslocando elementos à esquerda para preencher o vazio.
+        """
+        if indice < 0 or indice >= self.tamanho:
+            raise IndexError("Índice fora do intervalo para remoção.")  # Valida índice
+        
+        # Desloca elementos para a esquerda para preencher a lacuna
+        for i in range(indice, self.tamanho - 1):
+            self.dados[i] = self.dados[i + 1]
+        
+        self.dados[self.tamanho - 1] = None  # Limpa a última posição
+        self.tamanho -= 1                    # Decrementa o tamanho atual
 
     def obter(self, indice):
-        # Retorna o elemento no índice especificado, checando limites
-        if indice < 0 or indice >= self.atual_tam:
-            raise IndexError("Índice fora do permitido")
-        return self.elementos[indice]
+        """
+        Retorna o elemento armazenado no índice especificado.
+        """
+        if 0 <= indice < self.tamanho:
+            return self.dados[indice]
+        else:
+            raise IndexError("Índice fora do intervalo.")  # Valida índice
 
     def __len__(self):
-        # Retorna o tamanho atual (número de elementos válidos)
-        return self.atual_tam
+        """
+        Retorna o número atual de elementos no vetor.
+        """
+        return self.tamanho
 
-    def __iter__(self):
-        # Permite iterar sobre os elementos válidos do array
-        for i in range(self.atual_tam):
-            yield self.elementos[i]
+    def resetar(self):
+        """
+        Limpa o vetor, removendo todos os elementos e zerando tamanho.
+        """
+        self.dados = [None] * self.capacidade
+        self.tamanho = 0
